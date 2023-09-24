@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Todo List</title>
+</head>
+
+<body>
+<div id="homePage" class="home-page">
+<header class="header">
+    <div class="left-section">
+        <div  class="custom-tooltip">    <img src="image/home.svg" alt="Home" id="homeImage"  ></div>
+        <div class="search">
+            <input type="text" id="searchInput" placeholder="Хайх">
+            <img src="image/search.svg" alt="Search">
+        </div>
+    </div>
+    <img class="todolist" src="image/todolist.png" alt="logo">
+    <div class="right-section">
+
+        <div class="dropdown" id="taskDropdown">  <button id="myButton" class="dropbtn custom-tooltip2">+</button>
+
+        </div>
+
+
+        <div class="productivity-count" >
+            <div class="daily-tasks" >
+
+                <div class="custom-tooltip3" ><button><div class="progress-circle"  >
+                    <div class="slice" style="transition: transform 0.5s ease;" id="myButton2"></div>
+                </div>
+                    <div class="task-count" id="myButton5">>0 / <span id="dailyTaskGoal" >5</span></div>
+                </button>
+                </div>
+                <div class="dropdown-content" id="myDropdown2"  style="display: none;" >
+                <input type="text" id="dailyTaskInput" placeholder="Даалгаварын тоог нэмэх">
+                <button class="add-number-button" >Нэмэх</button>
+                </div>
+                <div class="dropdown-content" id="myDropdown5"  style="display: none;" >
+                    <input type="text" id="dailyTaskInput2" placeholder="Даалгаварын тоог нэмэх">
+                    <button class="add-number-button2" >Нэмэх</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="help"><img src="image/help.svg"></button>
+        <button class="notifications">
+            <img src="image/bell.svg">
+        </button>
+        <div class="profile">
+
+            <div class="profile-dropdown">
+            <button id="profileButton">
+              <img src="image/profile.png" alt="Profile">
+            </button>
+            <div class="dropdown-content" id="profileDropdown">
+                <a href="#" id="signOutButton" style="font-size: 15px; text-align: center;">Sign Out</a>
+            </div>
+            </div>
+
+            <div id="welcomeMessage" class="welcome-message" style="display: none; font-size: 15px"></div>
+            <div id="profile-signin" style="font-size: 15px">Нэвтрэх</div>
+        </div>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <div id="profileForm" class="profile-form" style="display: none;">
+       <div class="tab-container">
+           <button class="tab" onclick="showTab('profileSignupForm')">Бүртгүүлэх</button>
+           <button class="tab" onclick="showTab('profileSigninForm')">Нэвтрэх</button>
+       </div>
+
+        <form id="profileSignupForm" class="tab-content">
+            <input type="text" id="profileSignupUsername" placeholder="Username" required>
+            <div id="signupUsernameError" class="error-message" style="color: red; font-size: 13px; padding: 0 10px"></div>
+            <input type="password" id="profileSignupPassword" placeholder="Password" required>
+            <button type="submit" style="width: 100%; font-size: 15px;margin-top: 15px;">Бүртгүүлэх</button>
+        </form>
+
+        <form id="profileSigninForm" class="tab-content" style="display: none;">
+            <input type="text" id="profileSigninUsername" placeholder="Username" required>
+            <div id="signinUsernameError" class="error-message" style="color: red; font-size: 13px; padding: 0 10px;"></div>
+            <input type="password" id="profileSigninPassword" placeholder="Password" required>
+            <button type="submit" style="width: 100%; font-size: 15px;margin-top: 15px;">Нэвтрэх</button>
+        </form>
+
+    </div>
+    <script>
+
+        function showTab(tabName) {
+            var tabs = document.querySelectorAll('.tab-content');
+            var buttons = document.querySelectorAll('.tab');
+
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].style.display = 'none';
+                buttons[i].style.textDecoration = 'none';
+            }
+
+            document.getElementById(tabName).style.display = 'block';
+        }
+        showTab('profileSigninForm');
+    </script>
+
+      <div id="myDropdown" style="display: none;">
+        <div class="text-section">
+            <textarea id="task" placeholder="Даалгаврын Нэр" class="task-input"></textarea>
+            <textarea id="description" placeholder="Тайлбар" class="description-input"></textarea>
+        </div>
+        <div class="button-section">
+            <button id="cancelTask">Цуцлах</button>
+            <button  id="addTask">Даалгавар нэмэх</button>
+        </div>
+    </div>
+    <div id="myDropdown3" style="display: none;">
+        <div class="text-section">
+            <textarea id="task2" placeholder="Даалгаврын Нэр" class="task-input"></textarea>
+            <textarea id="description2" placeholder="Тайлбар" class="description-input"></textarea>
+        </div>
+        <div class="button-section">
+            <button id="cancelTask2">Цуцлах</button>
+            <button  id="addTask2">Даалгавар нэмэх</button>
+        </div>
+    </div>
+    <div id="myDropdown4" style="display: none;">
+        <div class="text-section">
+            <textarea id="task3" placeholder="Даалгаврын Нэр" class="task-input"></textarea>
+            <textarea id="description3" placeholder="Тайлбар" class="description-input"></textarea>
+        </div>
+        <div class="button-section">
+            <button id="cancelTask3">Цуцлах</button>
+            <button  id="addTask3">Даалгавар нэмэх</button>
+        </div>
+    </div>
+    <ul id="taskList"></ul>
+
+    <div class="dropdown" >
+        <button id="myButton3" class="dropbtn">+</button>
+        <span id="myButton4">Даалгавар нэмэх</span>
+    </div>
+    <div id="taskContainer">
+        <button id="clearList">Бүгдийг устгах</button>
+    </div>
+    <div id="emptyStateMessage" style=" text-align: center;">
+        <div style="max-width: 300px; margin: 0 auto;">
+            <img id="Image-for-user" src="image/background.png" alt="Image" style="max-width: 100%; margin-bottom:15px; display: none; " />
+            <div id="userMessage" class="welcome-message" style=""></div>
+        </div>
+    </div>
+    <div id="emptyStateMessage2" style=" text-align: center;">
+        <div style="max-width: 300px; margin: 0 auto;">
+            <div id="userMessage2" class="welcome-message" style=" font-size: 14px"><span style="text-transform: capitalize; font-weight: bold; font-size: 16px;"></span>Үлдсэн өдрийг сайхан өнгөрүүлээрэй, мөн #Todolist-ийн
+                гайхалтай байдлыг хуваалцахаа бүү мартаарай ↓
+        </div>
+    </div>
+
+</div>
+</div>
+<script src="js/script.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
