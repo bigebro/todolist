@@ -19,14 +19,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const signOutButton = document.getElementById('signOutButton');
     const profileSignin = document.getElementById('profile-signin');
     const imageForUser = document.getElementById('Image-for-user');
+    const taskList = document.getElementById("taskList");
+    const taskCount = document.querySelector(".task-count");
 
     let loggedIn = false;
     let signedUp = false;
     let isOnSignupForm = false;
     let isProfileFormVisible = false;
     let dropdownVisible = false;
+    let completedTasks = 0;
+    let totalAddedTasks = 0;
+    let dailyTaskGoal = 5; // Default goal
 
-    // Database setup
+    // userDatabase setup
     const dbName = "userDatabase";
     const dbVersion = 1;
 
@@ -45,6 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+    function resetDefaults() {
+        completedTasks = 0; //
+        dailyTaskGoal = 5; //
+
     }
 
     request.onsuccess = ((event) => {
@@ -76,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 profileForm.style.display = "none";
                 imageForUser.style.display = "block";
                 showDropdown();
+                displayTasks(username);
 
             };
 
@@ -86,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Sign-in
-        signinForm.addEventListener("submit", (event) => {
+           signinForm.addEventListener("submit", (event) => {
             event.preventDefault();
             const username = document.getElementById("profileSigninUsername").value;
             const password = document.getElementById("profileSigninPassword").value;
@@ -114,6 +125,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     profileForm.style.display = "none";
                     imageForUser.style.display = "block";
                     showDropdown();
+                    displayTasks(username);
+
                 } else {
                     console.error("Login failed. Invalid credentials.");
                     userMessage.style.display = 'none';
@@ -127,6 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 signinUsernameError.textContent = "Мэдээдээлэлд алдаа гарлаа.";
             };
         });
+
+
+
+
+
 
         function toggleForms(username) {
             const signupForm = document.getElementById("profileSignupForm");
@@ -148,7 +166,146 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+
     });
+
+
+    // todoDBSetup
+    const request2 = window.indexedDB.open("todoDB", 1);
+    let db2;
+
+    request2.onupgradeneeded = function (event) {
+        db2 = event.target.result;
+        const objectStore = db2.createObjectStore("tasks", { keyPath: "id", autoIncrement: true });
+        objectStore.createIndex("task", "task", { unique: false });
+    };
+
+    request2.onsuccess = function (event) {
+        db2 = event.target.result;
+        displayTasks();
+    };
+
+    request2.onerror = function (event) {
+        console.error("Database error: " + event.target.errorCode);
+    };
+
+
+
+    function displayTasks(username) {
+        while (taskList.firstChild) {
+            taskList.removeChild(taskList.firstChild);
+        }
+
+        const objectStore = db2.transaction("tasks").objectStore("tasks");
+        objectStore.openCursor().onsuccess = function (event) {
+            const cursor = event.target.result;
+
+
+            if (cursor) {
+                const task = cursor.value;
+                if (task.username === username) {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `
+                    <div class="task-info">  
+                        <span class="task ${cursor.value.completed ? "completed" : ""}">${cursor.value.task}</span>
+                        <p class="description">${cursor.value.description}</p>
+                    </div>
+                    <button class="delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M3.5 1a.5.5 0 0 1 .5.5V2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1.5V1zm1 .5a.5.5 0 0 1 .5-.5H11a.5.5 0 0 1 .5.5V2H4V1.5zm1 
+                            1V2h6v.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5zM1 4v9a1 1 0 0 1 1 1h12a1 1 0 0 1-1-1V4H1z"/>
+                    </svg></button>
+                `;
+                    listItem.querySelector(".delete").addEventListener("click", function () {
+                        deleteTask(cursor.key);
+                    });
+                    listItem.querySelector(".task").addEventListener("click", function () {
+                        toggleTaskStatus(cursor.key, !cursor.value.completed);
+                    });
+
+                    taskList.appendChild(listItem);
+
+                    if (cursor.value.completed) {
+                        completedTasks++;
+                    }
+                }
+
+                cursor.continue();
+            }
+            updateTaskCount();
+        };
+    }
+
+
+    function isTaskListEmpty() {
+        const taskList = document.getElementById('taskList');
+        return taskList.childElementCount === 0;
+    }
+    function toggleEmptyStateMessage() {
+        const emptyStateMessage2 = document.getElementById('emptyStateMessage2');
+        const taskContainer = document.getElementById('taskContainer');
+        if (isTaskListEmpty()) {
+            userMessage2.style.display = 'block';
+            userMessage.style.display = 'none';
+            emptyStateMessage2.style.display = 'block';
+            taskContainer.style.display = 'none';
+            imageForUser.style.display = "block";
+        } else {
+            emptyStateMessage2.style.display = 'none';
+            taskContainer.style.display = 'block';
+        }
+    }
+    function updateTaskCount() {
+        taskCount.textContent = `${completedTasks} / ${dailyTaskGoal}`;
+        const percentage = (completedTasks / dailyTaskGoal) * 100;
+        const slice = document.querySelector('.slice');
+        const clipPathValue = `polygon(0 0, 100% 0, 100% ${100 - percentage}%, 0 ${100 - percentage}%)`;
+        slice.style.clipPath = clipPathValue;
+        toggleEmptyStateMessage();
+    }
+    function toggleTaskStatus(id, completed) {
+        const transaction = db2.transaction(["tasks"], "readwrite");
+        const objectStore = transaction.objectStore("tasks");
+        const request2 = objectStore.get(id);
+        request2.onsuccess = function () {
+            const task = request2.result;
+            task.completed = completed;
+            const updateRequest = objectStore.put(task);
+            updateRequest.onsuccess = function () {
+                displayTasks();
+            };
+        };
+        transaction.onerror = function (event) {
+            console.error("Transaction error: " + event.target.errorCode);
+        };
+        if (completed) {
+            completedTasks++;
+        } else {
+            completedTasks--;
+        }
+        updateTaskCount();
+        toggleEmptyStateMessage();
+    }
+    function deleteTask(id) {
+        const transaction = db2.transaction(["tasks"], "readwrite");
+        const objectStore = transaction.objectStore("tasks");
+        const request2 = objectStore.delete(id);
+        request2.onsuccess = function () {
+            totalAddedTasks--;
+            displayTasks();
+        };
+        transaction.onerror = function (event) {
+            console.error("Transaction error: " + event.target.errorCode);
+        };
+        completedTasks++;
+        updateTaskCount();
+        toggleEmptyStateMessage();
+    }
+
+
+
+
+
+
 
     function showDropdown() {
         const profileDropdown = document.getElementById('profileDropdown');
@@ -198,25 +355,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     profileButton.addEventListener('click', () => {
-            if (loggedIn || signedUp) {
-                signOutButton.style.display = 'block';
-                showDropdown();
+        if (loggedIn || signedUp) {
+            signOutButton.style.display = 'block';
+            showDropdown();
+        } else {
+            if (!isOnSignupForm && !loggedIn && !signedUp) {
+                profileSigninForm.style.display = 'block';
+                showSignupForm();
+                isOnSignupForm = true;
             } else {
-                if (!isOnSignupForm && !loggedIn && !signedUp) {
-                    profileSigninForm.style.display = 'block';
-                    showSignupForm();
-                    isOnSignupForm = true;
-                } else {
 
-                }
             }
+        }
 
-            if (!isProfileFormVisible) {
+        if (!isProfileFormVisible) {
 
-                profileForm.style.display = 'block';
-                isProfileFormVisible = true;
-            }
-        });
+            profileForm.style.display = 'block';
+            isProfileFormVisible = true;
+        }
+    });
 
 
 

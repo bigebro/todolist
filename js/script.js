@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let completedTasks = 0;
     let dailyTaskGoal = 5; // Default goal
     let totalAddedTasks = 0;
-    // IndexedDB
+    // todoDBSetup
     const request = window.indexedDB.open("todoDB", 1);
     let db;
 
@@ -100,6 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     toggleEmptyStateMessage();
 
+
     function adjustDropdownHeight() {
         const dropdown = document.getElementById("myDropdown");
         const descriptionHeight = descriptionInput.scrollHeight;
@@ -132,6 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
     descriptionInput.addEventListener("input", adjustDropdownHeight);
     descriptionInput2.addEventListener("input", adjustDropdownHeight2);
     descriptionInput3.addEventListener("input", adjustDropdownHeight3);
+
 
     function clearAllTasks() {
         const transaction = db.transaction(["tasks"], "readwrite");
@@ -222,14 +224,14 @@ document.addEventListener("DOMContentLoaded", function () {
     function addNewTask3() {
 
         const taskText3 = taskInput3.value.trim();
-
+        const signedUpUsername = document.getElementById("profileSignupUsername").value;
         const taskDescription3 = descriptionInput3.value.trim();
 
         if (taskText3 === "") return;
         const transaction = db.transaction(["tasks"], "readwrite");
         const objectStore = transaction.objectStore("tasks");
 
-        const task3 = { task: taskText3, description: taskDescription3, completed: false };
+        const task3 = { username: signedUpUsername, task: taskText3, description: taskDescription3, completed: false };
 
         const request3 = objectStore.add(task3);
 
@@ -242,7 +244,7 @@ document.addEventListener("DOMContentLoaded", function () {
             cancelTaskButton3.style.display = "block flex";
             totalAddedTasks++;
             updateTaskCount();
-            displayTasks();
+            displayTasks(signedUpUsername);
             imageForUser.style.display = "none";
         };
         toggleEmptyStateMessage();
@@ -289,17 +291,22 @@ document.addEventListener("DOMContentLoaded", function () {
         updateTaskCount();
     }
 
-    function displayTasks() {
+    function displayTasks(username) {
         while (taskList.firstChild) {
             taskList.removeChild(taskList.firstChild);
         }
 
         const objectStore = db.transaction("tasks").objectStore("tasks");
+
         objectStore.openCursor().onsuccess = function (event) {
             const cursor = event.target.result;
+
             if (cursor) {
-                const listItem = document.createElement("li");
-                listItem.innerHTML = `
+                const task = cursor.value;
+                if (task.username === username) {
+                    const listItem = document.createElement("li");
+                    listItem.setAttribute("data-id", cursor.key);
+                    listItem.innerHTML = `
                  <div class="task-info">  
                     <span class="task ${cursor.value.completed ? "completed" : ""}">${cursor.value.task}</span>
                       <p class="description">${cursor.value.description}</p>
@@ -309,18 +316,19 @@ document.addEventListener("DOMContentLoaded", function () {
                   1V2h6v.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5zM1 4v9a1 1 0 0 1 1 1h12a1 1 0 0 1-1-1V4H1z"/>
                      </svg></button>
                 `;
-                listItem.querySelector(".delete").addEventListener("click", function () {
-                    deleteTask(cursor.key);
-                });
-                listItem.querySelector(".task").addEventListener("click", function () {
-                    toggleTaskStatus(cursor.key, !cursor.value.completed);
-                });
-                taskList.appendChild(listItem);
+                    listItem.querySelector(".delete").addEventListener("click", function () {
+                        const taskId = listItem.getAttribute("data-id");
+                        deleteTask(taskId);
+                    });
+                    listItem.querySelector(".task").addEventListener("click", function () {
+                        toggleTaskStatus(cursor.key, !cursor.value.completed);
+                    });
+                    taskList.appendChild(listItem);
 
-                if (cursor.value.completed) {
-                    completedTasks++;
+                    if (cursor.value.completed) {
+                        completedTasks++;
+                    }
                 }
-
                 cursor.continue();
             }
             updateTaskCount();
@@ -330,11 +338,18 @@ document.addEventListener("DOMContentLoaded", function () {
     function deleteTask(id) {
         const transaction = db.transaction(["tasks"], "readwrite");
         const objectStore = transaction.objectStore("tasks");
-        const request = objectStore.delete(id);
-
+        const request = objectStore.delete(parseInt(id));
+        console.log(request,"request");
+        const signedUpUsername = document.getElementById("profileSignupUsername").value;
+        const signedInUsername = document.getElementById("profileSigninUsername").value;
         request.onsuccess = function () {
             totalAddedTasks--;
-            displayTasks();
+            if (signedUpUsername) {
+                displayTasks(signedUpUsername);
+            } else {
+                displayTasks(signedInUsername);
+            }
+
         };
 
         transaction.onerror = function (event) {
